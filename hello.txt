@@ -1,12 +1,201 @@
-cheat bluff
-lie
-k
-a
-b
-o
-p
-q
-z
-y
-d
-oh
+#include <cmath>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <string>
+#include <vector>
+#include <sstream>
+
+using namespace std;
+
+
+
+struct attr {
+	string name;
+	string value;
+};
+struct tag {
+	string name;
+    bool open;
+	vector<attr> attributes;
+}; 
+
+void parse_lines(int);
+void parse_queries(int);
+void insert_vector(tag);
+
+vector<vector<tag>> tags;
+
+int main() {
+    /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
+    int N, Q;
+    cin >> N;
+    cin >> Q;
+    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    
+    if((N >= 1 && N <= 20) && (Q >= 1 && Q <= 20))
+    {
+        parse_lines(N);
+        parse_queries(Q);
+        
+    }
+    return 0;
+}
+
+void parse_queries(int Q)
+{
+    string line, temp;
+    bool match = true;
+    vector<string> vec_str; 
+    for(int i = 0; i < Q; ++i)
+    {
+        getline(cin, line);
+        
+        for(int j = 0; j < line.size()-1; ++j)
+        {
+          
+            if(line[j] == '.')
+            {
+                //cout << temp << "__\n";
+                vec_str.push_back(temp);
+                temp.clear();
+            }
+            else if(line[j] == '~')
+            {
+                string attr_name = line.substr(j+1); 
+                vec_str.push_back(temp.substr(1));
+                temp.clear();
+                for(size_t ix = 0; ix < tags.size()-1; ++ix)
+                {
+                    if(tags[ix][0].name == vec_str[0])
+                    {
+                        for(size_t iy = 0; iy < vec_str.size(); ++iy)
+                        {
+                            if(tags[ix][iy].name !=  vec_str[iy])
+                            {
+                                cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
+                                match = false;
+                                //cout << "maybe";
+                                break;
+                            }
+                            if(iy == vec_str.size()-1 && tags[ix][iy].name ==  vec_str[iy])
+                            {
+                               
+                                for(size_t k = 0; k < tags[ix][iy].attributes.size(); ++k)
+                                {
+                               
+                                    if(tags[ix][iy].attributes.at(k).name == attr_name)
+                                    {
+                                            cout << tags[ix][iy].attributes.at(i).value << endl;
+                                            //cout << "\nhi\n";
+                                            vec_str.clear();
+                                            break;
+                                    }
+                                    if(tags[ix][iy].attributes.at(k).name != attr_name && k == tags[ix][iy].attributes.size() -1)
+                                    {
+                                        match = false;
+                                    }
+                                }
+
+
+                           }
+                        }
+                    }
+                    if(!match)
+                    {
+                        cout << "Not Found!" << endl;
+                        match = true;
+                        vec_str.clear();
+                    }
+                }
+            }
+            temp += line[j];
+        }
+    }
+}
+
+void insert_vector(tag t)
+{
+    for(int ix = tags.size() - 2; ix >= 0; --ix)
+    {
+        //cout << tags.size();
+		if(tags[ix][0].open == true)
+        {
+            tags[ix].push_back(t);
+        }
+    }
+}
+void parse_lines(int N)
+{
+    string line;
+    int current;
+    vector<tag> vec_tag;
+    tag t; 
+    attr a;
+    for(int i = 0; i < N; ++i)
+    {
+        getline(cin, line);
+        if(line.size() <= 200)
+        {
+            if(line[0] == '<' && line[line.size()-1] == '>')
+            {
+                if(line[1] != '/')
+                {
+                    stringstream ss(line.substr(1));
+                    string sub_line;
+                    getline(ss,sub_line,' ');
+                    t.name = sub_line;
+                    t.open = true;
+                    
+                    if(sub_line[sub_line.size()-1] != '>')
+                    {
+                        while(sub_line != ">")
+                        {
+                            getline(ss,sub_line,' ');
+                            a.name = sub_line;
+                            getline(ss,sub_line,'"');
+                            getline(ss,sub_line,'"');
+                            a.value = sub_line;
+                            t.attributes.push_back(a);
+                            getline(ss,sub_line, ' ');
+							
+                        }
+                       
+                    }
+                    else
+                    {
+                        getline(ss,sub_line,'>');
+                       
+                    }
+				
+                    tags.push_back(vector<tag>());
+                    int current = tags.size() - 1;
+                    tags.at(current).push_back(t);
+					//cout << "\nmade it3\n";
+                    insert_vector(t);
+				
+                    
+                    //tags.push_back(vec_tag);
+                   
+                }
+                else
+                {
+                    stringstream ss(line.substr(2));
+                    string sub_line;
+                    getline(ss,sub_line,'>');
+                    for(size_t j = 0; j < tags.size(); ++j)
+                    {
+                        if(tags[j][0].name == sub_line)
+                        {
+                            tags[j][0].open = false;
+                        }
+                    }
+                }
+               
+            }
+            else
+                break;
+        }
+    }
+}
