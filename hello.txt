@@ -37,6 +37,23 @@ int main() {
     if((N >= 1 && N <= 20) && (Q >= 1 && Q <= 20))
     {
         parse_lines(N);
+        //cout << endl << tags.size() << endl;
+        /*for(int i = 0; i < tags.size(); ++i){
+            
+            cout << endl << tags[i].size() << endl;
+            
+            for(int j = 0; j < tags[i].size(); ++j){
+               
+                for(size_t k = 0; k < tags[i][j].attributes.size(); ++k)
+                {
+                    cout << tags[i][j].attributes.size() << endl;    
+                    cout << tags[i][j].attributes.at(k).name << endl;
+                    cout << tags[i][j].attributes.at(k).value << endl;
+                }
+                 
+                
+            }
+        }*/
         parse_queries(Q);
         
     }
@@ -68,13 +85,15 @@ void parse_queries(int Q)
                 temp.clear();
                 for(size_t ix = 0; ix < tags.size()-1; ++ix)
                 {
+                   // cout << tags[ix][0].name << "\n" <<  vec_str[0] << "\n";
                     if(tags[ix][0].name == vec_str[0])
                     {
                         for(size_t iy = 0; iy < vec_str.size(); ++iy)
                         {
+                          // cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
                             if(tags[ix][iy].name !=  vec_str[iy])
                             {
-                                cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
+                                //cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
                                 match = false;
                                 //cout << "maybe";
                                 break;
@@ -94,6 +113,7 @@ void parse_queries(int Q)
                                     }
                                     if(tags[ix][iy].attributes.at(k).name != attr_name && k == tags[ix][iy].attributes.size() -1)
                                     {
+                                        //cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
                                         match = false;
                                     }
                                 }
@@ -171,9 +191,11 @@ void parse_lines(int N)
 				
                     tags.push_back(vector<tag>());
                     int current = tags.size() - 1;
+                    //cout << "\n" << t.name << endl;
                     tags.at(current).push_back(t);
 					//cout << "\nmade it3\n";
                     insert_vector(t);
+                    t.attributes.clear();
 				
                     
                     //tags.push_back(vec_tag);
