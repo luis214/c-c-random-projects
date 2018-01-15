@@ -23,6 +23,7 @@ struct tag {
 
 void parse_lines(int);
 void parse_queries(int);
+string parse_qhelper(string, string);
 void insert_vector(tag);
 
 vector<vector<tag>> tags;
@@ -62,78 +63,76 @@ int main() {
 
 void parse_queries(int Q)
 {
-    string line, temp;
+    string line, temp, attribute, temp2;
     bool match = true;
     vector<string> vec_str; 
+    
     for(int i = 0; i < Q; ++i)
     {
-        getline(cin, line);
-        
-        for(int j = 0; j < line.size()-1; ++j)
-        {
-          
-            if(line[j] == '.')
-            {
-                //cout << temp << "__\n";
-                vec_str.push_back(temp);
-                temp.clear();
-            }
-            else if(line[j] == '~')
-            {
-                string attr_name = line.substr(j+1); 
-                vec_str.push_back(temp.substr(1));
-                temp.clear();
-                for(size_t ix = 0; ix < tags.size()-1; ++ix)
-                {
-                   // cout << tags[ix][0].name << "\n" <<  vec_str[0] << "\n";
-                    if(tags[ix][0].name == vec_str[0])
-                    {
-                        for(size_t iy = 0; iy < vec_str.size(); ++iy)
+       getline(cin, line);
+       for(int ix = 0; ix < tags.size(); ++ix)
+       {
+           stringstream ss(line);
+           getline(ss, temp, '.');
+           getline(ss, temp2, '~');
+           if(tags[ix][0].name == temp || tags[ix][0].name == temp2)
+           {
+               
+               for(int iy = 0; iy < tags[ix].size(); ++iy)
+               {
+                   line = parse_qhelper(tags[ix][iy].name, line);
+                   cout << line << endl;
+                   if(line == "match")
+                   {
+                        cout << "maybe";
+                        for(int k = 0; k = tags[ix][iy].attributes.size(); ++k)
                         {
-                          // cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
-                            if(tags[ix][iy].name !=  vec_str[iy])
+                            if(tags[ix][iy].attributes[k].name == line.substr(1))
                             {
-                                //cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
-                                match = false;
-                                //cout << "maybe";
+                                cout << tags[ix][iy].attributes[k].value << endl;
+                                match = true;
                                 break;
                             }
-                            if(iy == vec_str.size()-1 && tags[ix][iy].name ==  vec_str[iy])
-                            {
-                               
-                                for(size_t k = 0; k < tags[ix][iy].attributes.size(); ++k)
-                                {
-                               
-                                    if(tags[ix][iy].attributes.at(k).name == attr_name)
-                                    {
-                                            cout << tags[ix][iy].attributes.at(i).value << endl;
-                                            //cout << "\nhi\n";
-                                            vec_str.clear();
-                                            break;
-                                    }
-                                    if(tags[ix][iy].attributes.at(k).name != attr_name && k == tags[ix][iy].attributes.size() -1)
-                                    {
-                                        //cout << tags[ix][iy].name << "\n" <<  vec_str[iy] << "\n";
-                                        match = false;
-                                    }
-                                }
-
-
-                           }
+                            else
+                                match = false;
                         }
-                    }
-                    if(!match)
-                    {
-                        cout << "Not Found!" << endl;
-                        match = true;
-                        vec_str.clear();
-                    }
-                }
-            }
-            temp += line[j];
-        }
+                        break;
+                   }
+                   else if(line == "no match")
+                   {
+                        match = false;
+                        break;
+                   }
+               }
+               break;
+           }  
+       }
+       if(!match)
+       {
+           cout << "Not Found!\n";
+       }
     }
 }
+
+string parse_qhelper(string tline, string qline)
+{
+    if(qline[0] == '~')
+    {
+        return "match";
+    }
+    if(qline[0] == '.')
+    {
+        cout << "x";
+        return qline.substr(1);
+    }
+    if(qline[0] == tline[0])
+    {
+        parse_qhelper(tline.substr(1), qline.substr(1));
+    }
+    else 
+      return "no match";
+}
+  
 
 void insert_vector(tag t)
 {
