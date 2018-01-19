@@ -164,3 +164,27 @@ void parse_lines(int N, int total_lines, string prev_tag)
 		parse_lines(N, total_lines, current_tag);
 	}
 }
+
+  string line, temp, attribute, temp2;
+    bool match;
+    vector<string> vec_str; 
+    
+    for(int i = 0; i < Q; ++i)
+    {
+       getline(cin, line);
+	   stringstream sx(line);
+	   //cout << line << endl;
+       for(int ix = 0; ix < tags.size(); ++ix)
+       {;
+		   stringstream ss(line);
+           getline(ss, temp, '.'); //Parse until your reach .
+           getline(sx, temp2, '~'); //Parse until you reach ~
+		  
+           if(tags[ix][0].name == temp || tags[ix][0].name == temp2)
+           {
+               
+			   for(int iy = 0; iy < tags[ix].size(); ++iy)
+               {
+                   //cout << "maybe";
+				   line = parse_queryhelper(tags[ix][iy].name, line);
+                  // cout << line << endl;
