@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <map>
 
 
 using namespace std;
@@ -17,19 +18,16 @@ struct attr {
 	string value;
 };
 struct tag {
-	string name;
-    bool open;
 	vector<attr> attributes;
-	int steps;
+	vector<string> children_tags;
 }; 
 
-void parse_lines(int);
+void parse_lines(int,int,string);
 void parse_queries(int);
-string parse_queryhelper(string, string);
-void insert_vector(tag);
-void check();
 
-vector<vector<tag>> tags;
+
+map<string,tag> tags;
+vector<string> parent_tags;
 
 int main() {
     /* Enter your code here. Read input from STDIN. Print output to STDOUT */   
@@ -40,52 +38,27 @@ int main() {
     
     if((N >= 1 && N <= 20) && (Q >= 1 && Q <= 20))
     {
-        parse_lines(N);
-		check();
-        //cout << endl << tags.size() << endl;
-        for(int i = 0; i < tags.size(); ++i){
-            
-          //  cout << endl << tags[i].size() << endl;
-			cout << tags[i][0].steps << " ";
-            
-            for(int j = 0; j < tags[i].size(); ++j){
-               
-				cout << tags[i][j].name <<  " { "; 
-				for(size_t k = 0; k < tags[i][j].attributes.size(); ++k)
-                {   
-                    cout << tags[i][j].attributes.at(k).name << "=";
-                    cout << tags[i][j].attributes.at(k).value << " ";
-                }
-				cout << " } ";
-            }
-			cout << "\n\n";
-        }
-        parse_queries(Q);
-        
+		parse_lines(N,0,"");
+		
+		/*FOR TESTING PURPOSES
+		for (std::map<string,tag>::iterator it=tags.begin(); it!=tags.end(); ++it)
+		{
+			cout << it->first << " children: ";
+			for(size_t i = 0; i < it->second.children_tags.size(); ++i)
+			{
+				cout << it->second.children_tags[i] << " ";
+			}
+			cout << endl;
+		} 
+		for(size_t i = 0; i < parent_tags.size(); i++)
+		{
+			cout << parent_tags[i] << endl;
+		}*/
     }
     return 0;
 }
 
-void check()
-{
-	for(int i = 0; i < tags.size(); ++i)
-	{
-		tag t = tags[i][0];
 
-
-		for(int k = 0; k < tags.size(); ++k)
-		{
-			for(int j = 0; j < tags[k].size(); ++j)
-		    {
-               
-				if (tags[k][j].name == t.name)
-				{
-					tags[i][0].steps += 1;
-				}
-		    }	
-		}     
-	}
-}
 string parse_queryhelper(string tline, string qline)
 {
     if(qline[0] == '~')
@@ -98,158 +71,96 @@ string parse_queryhelper(string tline, string qline)
     }
     else if(qline[0] == tline[0])
     {
-        return parse_queryhelper(tline.substr(1), qline.substr(1));
+		char q = qline[0];
+		char t = tline[0];
+		return parse_queryhelper(tline.substr(1), qline.substr(1));
     }
     else
         return "no match";
 }
 void parse_queries(int Q)
 {
-    string line, temp, attribute, temp2;
-    bool match;
-    vector<string> vec_str; 
-    
-    for(int i = 0; i < Q; ++i)
-    {
-       getline(cin, line);
-	   stringstream sx(line);
-	   getline(sx, temp2, '~'); //Parse until you reach ~
-	   //cout << line << endl;
-       for(int ix = 0; ix < tags.size(); ++ix)
-       {
-		   stringstream ss(line);
-           getline(ss, temp, '.'); //Parse until your reach .
-           
-		  
-		   int p = tags[ix][0].steps;
-		   if((tags[ix][0].name == temp || tags[ix][0].name == temp2) && tags[ix][0].steps < 2)
-           {
-               
-			   for(int iy = 0; iy < tags[ix].size(); ++iy)
-               {
-                   //cout << "maybe";
-				   line = parse_queryhelper(tags[ix][iy].name, line);
-                  // cout << line << endl;
-                   if(line == "match")
-                   {
-                        
-                        getline(sx, temp2, ' ');
-					    for(int k = 0; k < tags[ix][iy].attributes.size(); ++k)
-                        {
-							if(tags[ix][iy].attributes[k].name == temp2)
-                            {
-                                cout << tags[ix][iy].attributes[k].value << endl;
-								//flush();
-                                match = true;
-								line.clear();
-                                break;
-                            }
-                            else
-                                match = false;
-                        }
-                        break;
-                   }
-                   else if(line == "no match")
-                   {
-                        match = false;
-                        break;
-                   }
-               }
-               break;
-           }  
-		   else
-		   {
-			  match = false;
-		   }
-       }
-       if(!match)
-       {
-           cout << "Not Found!\n";
-		   line.clear();
-       }
-    }
+   
 }
-void insert_vector(tag t)
+
+void parse_lines(int N, int total_lines, string prev_tag)
 {
-    for(int ix = tags.size() - 2; ix >= 0; --ix)
-    {
-        //cout << tags.size();
-		if(tags[ix][0].open == true)
-        {
-            tags[ix].push_back(t);
-        }
-    }
-}
-void parse_lines(int N)
-{
-    string line;
-    int current;
-    vector<tag> vec_tag;
-    tag t; 
-    attr a;
-    for(int i = 0; i < N; ++i)
-    {
-        getline(cin, line);
-        if(line.size() <= 200)
-        {
-            if(line[0] == '<' && line[line.size()-1] == '>')
+	if(total_lines < N)
+	{
+		
+		++total_lines;
+		string line;
+		getline(cin,line);
+		string current_tag;
+
+		if(line[1] == '/')
+		{
+			bool found = false;
+			stringstream ss(line.substr(2));
+            getline(ss,current_tag,'>');
+			for (std::map<string,tag>::iterator it=tags.begin(); it!=tags.end(); ++it)
+			{
+				for(size_t i = 0; i < it->second.children_tags.size(); ++i)
+				{
+					if(it->second.children_tags.at(i) == current_tag)
+					{
+						current_tag = it->first;
+						found = true;
+						break;
+					}
+				}
+				if(found)
+					break;
+			}
+			if(!found)
+			{
+				parent_tags.push_back(current_tag);
+				current_tag.clear();
+			}
+			
+		}
+		else
+		{
+		
+			stringstream ss(line.substr(1));
+			
+            string sub_line;
+			tag t;
+			attr a;
+			getline(ss,current_tag,' ');
+			if(current_tag[current_tag.size()-1] != '>')
             {
-                if(line[1] != '/')
+
+				while(sub_line != ">")
                 {
-                    stringstream ss(line.substr(1));
-                    string sub_line;
                     getline(ss,sub_line,' ');
-                    t.name = sub_line;
-                    t.open = true;
-                    
-                    if(sub_line[sub_line.size()-1] != '>')
-                    {
-                        while(sub_line != ">")
-                        {
-                            getline(ss,sub_line,' ');
-                            a.name = sub_line;
-                            getline(ss,sub_line,'"');
-                            getline(ss,sub_line,'"');
-                            a.value = sub_line;
-                            t.attributes.push_back(a);
-                            getline(ss,sub_line, ' ');
-							//cout << "HEY";
-							
-                        }
-                    }
-                    else
-                    {
-                        stringstream ss(line.substr(1));
-						getline(ss,sub_line,'>');
-						t.name = sub_line;
-						//cout << "NO: " << t.name << "\n";
-                       
-                    }
-					t.steps = 0;
-                    tags.push_back(vector<tag>());
-                    int current = tags.size() - 1;
-                    tags.at(current).push_back(t);
-                    insert_vector(t);
-                    t.attributes.clear();
-                   
+                    a.name = sub_line;
+                    getline(ss,sub_line,'"');
+                    getline(ss,sub_line,'"');
+                    a.value = sub_line;
+                    t.attributes.push_back(a);
+                    getline(ss,sub_line, ' ');
                 }
-                else
-                {
-                    stringstream ss(line.substr(2));
-                    string sub_line;
-                    getline(ss,sub_line,'>');
-                    for(size_t j = 0; j < tags.size(); ++j)
-                    {
-                        if(tags[j][0].name == sub_line)
-                        {
-                            tags[j][0].open = false;
-                        }
-                    }
-                }
-               
+				
             }
             else
-                break;
-        }
-    }
+            {
+                stringstream ss(line.substr(1));
+				getline(ss,current_tag,'>');   
+            }
+			tags[current_tag] = t;
+
+			if(!prev_tag.empty())
+			{
+				auto search = tags.find(prev_tag);
+				if(search != tags.end()) 
+				{
+					search->second.children_tags.push_back(current_tag);
+					
+				} 
+			}
+		}
+
+		parse_lines(N, total_lines, current_tag);
+	}
 }
