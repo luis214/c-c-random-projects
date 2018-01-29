@@ -1,17 +1,13 @@
-#include <cmath>
-#include <cstdio>
 #include <vector>
 #include <iostream>
-#include <algorithm>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <map>
-
+#include <limits>
+#include <algorithm>
 
 using namespace std;
-
-
 
 struct attr {
 	string name;
@@ -24,6 +20,7 @@ struct tag {
 
 void parse_lines(int,int,string);
 void parse_queries(int);
+string parse_queryhelper(string,string, string);
 
 
 map<string,tag> tags;
@@ -39,55 +36,83 @@ int main() {
     if((N >= 1 && N <= 20) && (Q >= 1 && Q <= 20))
     {
 		parse_lines(N,0,"");
-		
-		/*FOR TESTING PURPOSES
-		for (std::map<string,tag>::iterator it=tags.begin(); it!=tags.end(); ++it)
-		{
-			cout << it->first << " children: ";
-			for(size_t i = 0; i < it->second.children_tags.size(); ++i)
-			{
-				cout << it->second.children_tags[i] << " ";
-			}
-			cout << endl;
-		} 
-		for(size_t i = 0; i < parent_tags.size(); i++)
-		{
-			cout << parent_tags[i] << endl;
-		}*/
+		parse_queries(Q);
     }
     return 0;
 }
 
 
-string parse_queryhelper(string tline, string qline)
+string parse_queryhelper(string current_tag, string prev, string query)
 {
-    if(qline[0] == '~')
-    {
-        return "match";
-    }
-    else if(qline[0] == '.')
-    {
-        return qline.substr(1);
-    }
-    else if(qline[0] == tline[0])
-    {
-		char q = qline[0];
-		char t = tline[0];
-		return parse_queryhelper(tline.substr(1), qline.substr(1));
-    }
-    else
-        return "no match";
+	if(query[0] == '.' || query[0] == '~')
+	{
+		bool found = false;
+		if(prev.empty())
+		{
+			if(find(parent_tags.begin(), parent_tags.end(), current_tag) != parent_tags.end())
+			{
+				if(tags.find(current_tag) != tags.end())
+					found = true;	
+			}
+		}
+		else
+		{
+			auto search = tags.find(prev);
+			if(search != tags.end())
+			{
+				if(find(search->second.children_tags.begin(), search->second.children_tags.end(), current_tag) != search->second.children_tags.end())
+					found = true;
+			}
+		}
+		if(found)
+		{
+			if(query[0] == '.')
+			{
+				prev = current_tag;		
+				current_tag.clear();
+				return parse_queryhelper(current_tag, prev, query.substr(1));
+			}
+			else if(query[0] == '~')
+			{
+				auto search = tags.find(current_tag);
+		
+				if(search != tags.end())
+				{
+
+					for(int i = 0; i < search->second.attributes.size(); ++i)
+					{
+						if(search->second.attributes[i].name == query.substr(1))
+						{
+							return search->second.attributes[i].value;
+						}
+					}
+				}
+			}
+		}
+		
+		return "Not Found!";
+	}
+
+	current_tag += query[0];
+	return parse_queryhelper(current_tag, prev, query.substr(1));
 }
 void parse_queries(int Q)
 {
-   
+	string line, query;
+	
+	for(int i = 0; i < Q; ++i)
+	{
+		getline(cin, query);
+	
+		string result = parse_queryhelper("","",query);
+		cout << result << endl;
+	} 
 }
 
 void parse_lines(int N, int total_lines, string prev_tag)
 {
 	if(total_lines < N)
 	{
-		
 		++total_lines;
 		string line;
 		getline(cin,line);
@@ -116,21 +141,17 @@ void parse_lines(int N, int total_lines, string prev_tag)
 			{
 				parent_tags.push_back(current_tag);
 				current_tag.clear();
-			}
-			
+			}	
 		}
 		else
 		{
-		
 			stringstream ss(line.substr(1));
-			
             string sub_line;
 			tag t;
 			attr a;
 			getline(ss,current_tag,' ');
 			if(current_tag[current_tag.size()-1] != '>')
             {
-
 				while(sub_line != ">")
                 {
                     getline(ss,sub_line,' ');
@@ -141,7 +162,6 @@ void parse_lines(int N, int total_lines, string prev_tag)
                     t.attributes.push_back(a);
                     getline(ss,sub_line, ' ');
                 }
-				
             }
             else
             {
@@ -164,27 +184,3 @@ void parse_lines(int N, int total_lines, string prev_tag)
 		parse_lines(N, total_lines, current_tag);
 	}
 }
-
-  string line, temp, attribute, temp2;
-    bool match;
-    vector<string> vec_str; 
-    
-    for(int i = 0; i < Q; ++i)
-    {
-       getline(cin, line);
-	   stringstream sx(line);
-	   //cout << line << endl;
-       for(int ix = 0; ix < tags.size(); ++ix)
-       {;
-		   stringstream ss(line);
-           getline(ss, temp, '.'); //Parse until your reach .
-           getline(sx, temp2, '~'); //Parse until you reach ~
-		  
-           if(tags[ix][0].name == temp || tags[ix][0].name == temp2)
-           {
-               
-			   for(int iy = 0; iy < tags[ix].size(); ++iy)
-               {
-                   //cout << "maybe";
-				   line = parse_queryhelper(tags[ix][iy].name, line);
-                  // cout << line << endl;
